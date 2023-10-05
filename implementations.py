@@ -64,7 +64,7 @@ def mean_squared_error_gd(y, tx, initial_w, max_iters, gamma):
         w = w - gamma*gradient
         # store w and loss
 
-    return w, loss
+    return (w, loss)
 
 
 """
@@ -116,7 +116,7 @@ def mean_squared_error_sgd(y, tx, initial_w, max_iters, gamma, batch_size=1):
         
         w = w - gamma*gradient
 
-    return loss, w
+    return (w, loss)
 
 """
 LEAST SQUARES
