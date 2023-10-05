@@ -200,8 +200,8 @@ def calculate_logistic_loss(y, tx, w):
     loss = 0
     for i in range(y.shape[0]):
         loss += -(1 / y.shape[0]) * (
-            y[i] * np.log(sigmoid(tx[i, :].T @ w))
-            + (1 - y[i]) * np.log(1 - sigmoid(tx[i, :].T @ w))
+            y[i] * np.log(sigmoid(tx[i, :] @ w))
+            + (1 - y[i]) * np.log(1 - sigmoid(tx[i, :] @ w))
         )
 
     return loss[0]
@@ -254,7 +254,7 @@ def logistic_learning_by_gradient_descent(y, tx, w, gamma):
 
     gradient = calculate_logistic_gradient(y, tx, w)
     new_w = w - gamma * gradient
-    new_loss = calculate_logistic_loss(y, tx, w)
+    new_loss = calculate_logistic_loss(y, tx, new_w)
 
     return new_w, new_loss
 
@@ -262,7 +262,7 @@ def logistic_learning_by_gradient_descent(y, tx, w, gamma):
 def logistic_regression_gradient_descent(y, tx, initial_w, max_iters, gamma):
     # start the logistic regression
     w = initial_w
-    loss = -1
+    loss = calculate_logistic_loss(y, tx, initial_w)
 
     for n in range(max_iters):
         # get loss and update w.
@@ -326,13 +326,29 @@ def logistic_learning_by_newton_method(y, tx, w, gamma):
     loss, gradient, hessian = logistic_regression_loss_gradient_hessian(y, tx, w)
 
     new_w = w - gamma * np.linalg.solve(hessian, gradient)
-    return new_w, loss
+    new_loss = calculate_logistic_loss(y, tx, new_w)
+    return new_w, new_loss
 
 
 def logistic_regression_newton_method(y, tx, initial_w, max_iters, gamma):
+    """
+    Compute one step of the the regularized logistic regression, using the newton method.
+
+    Args:
+        y:  shape=(N, 1)
+        tx: shape=(N, D)
+        max_iter: int
+        initial_w:  shape=(D, 1)
+        gamma: scalar
+        lambda_: scalar
+
+    Returns:
+        w: shape=(D, 1)
+        loss: scalar number
+    """
     w = initial_w
-    loss = -1
-    
+    loss = calculate_logistic_loss(y, tx, w)
+
     for n in range(max_iters):
         w, loss = logistic_learning_by_newton_method(y, tx, w, gamma)
 
@@ -340,6 +356,22 @@ def logistic_regression_newton_method(y, tx, initial_w, max_iters, gamma):
 
 
 def logistic_regression(y, tx, initial_w, max_iters, gamma, gd=True):
+    """
+    Compute the standard logistic regression, with either the gradient descent or the Newton method.
+
+    Args:
+        y:  shape=(N, 1)
+        tx: shape=(N, D)
+        max_iter: int
+        initial_w:  shape=(D, 1)
+        gamma: scalar
+        lambda_: scalar
+        gd: bool
+
+    Returns:
+        w: shape=(D, 1)
+        loss: scalar number
+    """
     if gd:
         return logistic_regression_gradient_descent(y, tx, initial_w, max_iters, gamma)
     return logistic_regression_newton_method(y, tx, initial_w, max_iters, gamma)
@@ -389,12 +421,28 @@ def learning_by_penalized_gradient(y, tx, w, gamma, lambda_):
     loss, penalized_gradient = penalized_logistic_regression(y, tx, w, lambda_)
 
     new_w = w - gamma * penalized_gradient
-    return new_w, loss
+    new_loss = calculate_logistic_loss(y, tx, new_w)
+    return new_w, new_loss
 
 
 def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma):
+    """
+    Compute the regularized logistic regression.
+
+    Args:
+        y:  shape=(N, 1)
+        tx: shape=(N, D)
+        max_iter: int
+        initial_w:  shape=(D, 1)
+        gamma: scalar
+        lambda_: scalar
+
+    Returns:
+        w: shape=(D, 1)
+        loss: scalar number
+    """
     w = initial_w
-    loss = -1
+    loss = calculate_logistic_loss(y, tx, w)
 
     for n in range(max_iters):
         w, loss = learning_by_penalized_gradient(y, tx, w, gamma, lambda_)
