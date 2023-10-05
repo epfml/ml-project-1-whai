@@ -1,6 +1,7 @@
 import numpy as np
 from helpers import batch_iter
 
+
 def compute_loss(y, tx, w, MAE=False):
     """Calculate the loss using either MSE or MAE.
 
@@ -14,9 +15,9 @@ def compute_loss(y, tx, w, MAE=False):
     """
     # ***************************************************
     if MAE:
-        loss = np.mean(np.abs(y - tx@w))
+        loss = np.mean(np.abs(y - tx @ w))
     else:
-        loss = (1/2)*np.mean((y - tx@w)**2)
+        loss = (1 / 2) * np.mean((y - tx @ w) ** 2)
     # ***************************************************
     return loss
 
@@ -24,6 +25,7 @@ def compute_loss(y, tx, w, MAE=False):
 """
 GRADIENT DESCENT
 """
+
 
 def compute_gradient(y, tx, w):
     """Computes the gradient at w.
@@ -37,7 +39,7 @@ def compute_gradient(y, tx, w):
         An array of shape (2, ) (same shape as w), containing the gradient of the loss at w.
     """
     N = len(y)
-    gradient = (1/N)*tx.T@(tx@w - y)
+    gradient = (1 / N) * tx.T @ (tx @ w - y)
     return gradient
 
 
@@ -59,9 +61,9 @@ def mean_squared_error_gd(y, tx, initial_w, max_iters, gamma):
     w = initial_w
     for n_iter in range(max_iters):
         gradient = compute_gradient(y, tx, w)
-        loss     = compute_loss(y, tx, w)
-        
-        w = w - gamma*gradient
+        loss = compute_loss(y, tx, w)
+
+        w = w - gamma * gradient
         # store w and loss
 
     return (w, loss)
@@ -84,10 +86,10 @@ def compute_stoch_gradient(y, tx, w, batch_size=1):
         An array of shape (2, ) (same shape as w), containing the stochastic gradient of the loss at w.
     """
 
-    mini_batch  = next(batch_iter(y, tx, batch_size, num_batches=1, shuffle=True))
-    y_batch     = mini_batch[0]
-    tx_batch    = mini_batch[1]
-    
+    mini_batch = next(batch_iter(y, tx, batch_size, num_batches=1, shuffle=True))
+    y_batch = mini_batch[0]
+    tx_batch = mini_batch[1]
+
     stoch_gradient = compute_gradient(y_batch, tx_batch, w)
     return stoch_gradient
 
@@ -112,11 +114,12 @@ def mean_squared_error_sgd(y, tx, initial_w, max_iters, gamma, batch_size=1):
 
     for n_iter in range(max_iters):
         gradient = compute_stoch_gradient(y, tx, w, batch_size)
-        loss     = compute_loss(y, tx, w)
-        
-        w = w - gamma*gradient
+        loss = compute_loss(y, tx, w)
+
+        w = w - gamma * gradient
 
     return (w, loss)
+
 
 """
 LEAST SQUARES
@@ -136,8 +139,8 @@ def least_squares(y, tx):
         mse: scalar.
     """
 
-    w_opt   = np.linalg.solve(tx.T@tx, tx.T@y)
-    mse     = 0.5*np.mean((y - tx@w_opt)**2)
+    w_opt = np.linalg.solve(tx.T @ tx, tx.T @ y)
+    mse = 0.5 * np.mean((y - tx @ w_opt) ** 2)
 
     return (w_opt, mse)
 
@@ -145,6 +148,7 @@ def least_squares(y, tx):
 """
 RIDGE REGRESSION
 """
+
 
 def ridge_regression(y, tx, lambda_):
     """implement ridge regression.
@@ -158,21 +162,24 @@ def ridge_regression(y, tx, lambda_):
         w: optimal weights, numpy array of shape(D,), D is the number of features."""
 
     N = len(y)
-    w_opt   = np.linalg.solve((tx.T@tx + 2*N*lambda_*np.eye(tx.shape[1])), tx.T@y)
-    #rmse    = np.sqrt(np.mean((y - tx@w_opt)**2))
-    mse     = 0.5*np.mean((y - tx@w_opt)**2)
+    w_opt = np.linalg.solve(
+        (tx.T @ tx + 2 * N * lambda_ * np.eye(tx.shape[1])), tx.T @ y
+    )
+    # rmse    = np.sqrt(np.mean((y - tx@w_opt)**2))
+    mse = 0.5 * np.mean((y - tx @ w_opt) ** 2)
 
     return (w_opt, mse)
+
 
 """
 LOGISTIC REGRESSION
 """
 
-#To complete
+# TODO : complete
 
 
 """
 REGULARIZED LOGISTIC REGRESSION
 """
 
-#To complete
+# TODO : complete
