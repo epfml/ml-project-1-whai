@@ -13,7 +13,7 @@ def compute_mse_loss(y, tx, w):
     Returns:
         the value of the loss (a scalar), corresponding to the input parameters w.
     """
-    
+
     return (1 / 2) * np.mean((y - tx @ w) ** 2)
 
 
