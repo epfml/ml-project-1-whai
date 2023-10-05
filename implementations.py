@@ -57,7 +57,8 @@ def mean_squared_error_gd(y, tx, initial_w, max_iters, gamma):
     for n_iter in range(max_iters):
         gradient = compute_gradient(y, tx, w)
         w = w - gamma * gradient
-        loss = compute_mse_loss(y, tx, w)
+
+    loss = compute_mse_loss(y, tx, w)
 
     return (w, loss)
 
@@ -108,7 +109,8 @@ def mean_squared_error_sgd(y, tx, initial_w, max_iters, gamma, batch_size=1):
     for n_iter in range(max_iters):
         gradient = compute_stoch_gradient(y, tx, w, batch_size)
         w = w - gamma * gradient
-        loss = compute_mse_loss(y, tx, w)
+
+    loss = compute_mse_loss(y, tx, w)
 
     return (w, loss)
 
@@ -260,6 +262,8 @@ def logistic_learning_by_gradient_descent(y, tx, w, gamma):
 def logistic_regression_gradient_descent(y, tx, initial_w, max_iters, gamma):
     # start the logistic regression
     w = initial_w
+    loss = -1
+
     for n in range(max_iters):
         # get loss and update w.
         w, loss = logistic_learning_by_gradient_descent(y, tx, w, gamma)
@@ -327,6 +331,8 @@ def logistic_learning_by_newton_method(y, tx, w, gamma):
 
 def logistic_regression_newton_method(y, tx, initial_w, max_iters, gamma):
     w = initial_w
+    loss = -1
+    
     for n in range(max_iters):
         w, loss = logistic_learning_by_newton_method(y, tx, w, gamma)
 
@@ -388,6 +394,8 @@ def learning_by_penalized_gradient(y, tx, w, gamma, lambda_):
 
 def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma):
     w = initial_w
+    loss = -1
+
     for n in range(max_iters):
         w, loss = learning_by_penalized_gradient(y, tx, w, gamma, lambda_)
 
