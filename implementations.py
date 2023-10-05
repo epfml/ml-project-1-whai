@@ -175,11 +175,209 @@ def ridge_regression(y, tx, lambda_):
 LOGISTIC REGRESSION
 """
 
-# TODO : complete
+def sigmoid(t):
+    """apply sigmoid function on t.
+
+    Args:
+        t: scalar or numpy array
+
+    Returns:
+        scalar or numpy array"""
+
+    sigmoid = 1/(1+np.exp(-t))
+    return sigmoid
+
+
+def calculate_logistic_loss(y, tx, w):
+    """compute the cost by negative log likelihood.
+
+    Args:
+        y:  shape=(N, 1)
+        tx: shape=(N, D)
+        w:  shape=(D, 1) 
+
+    Returns:
+        a non-negative loss"""
+    
+    assert y.shape[0] == tx.shape[0]
+    assert tx.shape[1] == w.shape[0]
+
+    loss = 0
+    for i in range(y.shape[0]):
+        loss += -(1/y.shape[0])*(y[i]*np.log(sigmoid(tx[i,:].T@w)) + (1 - y[i])*np.log(1 - sigmoid(tx[i,:].T@w)))
+
+    return loss[0]
+
+
+def calculate_logistic_gradient(y, tx, w):
+    """compute the gradient of loss.
+    
+    Args:
+        y:  shape=(N, 1)
+        tx: shape=(N, D)
+        w:  shape=(D, 1) 
+
+    Returns:
+        a vector of shape (D, 1)"""
+    
+    gradient = 0
+    N = y.shape[0]
+
+    for i in range(N):
+        gradient += -(1/N)*(y[i]*(1/(sigmoid(tx[i,:]@w)))*sigmoid(tx[i,:]@w)*(1 - sigmoid(tx[i,:]@w))*tx[i,:].T - (1-y[i])*(1/(1 - sigmoid(tx[i,:]@w)))*sigmoid(tx[i,:]@w)*(1 - sigmoid(tx[i,:]@w))*tx[i,:].T)
+
+    return gradient.reshape((-1, 1))
+
+def logistic_learning_by_gradient_descent(y, tx, w, gamma):
+    """
+    Do one step of gradient descent using logistic regression. Return the loss and the updated w.
+
+    Args:
+        y:  shape=(N, 1)
+        tx: shape=(N, D)
+        w:  shape=(D, 1) 
+        gamma: float
+
+    Returns:
+        loss: scalar number
+        w: shape=(D, 1)"""
+
+    gradient = calculate_logistic_gradient(y, tx, w)
+    new_w = w - gamma*gradient
+    new_loss = calculate_logistic_loss(y, tx, w)
+
+    return new_w, new_loss
+
+
+def logistic_regression_gradient_descent(y, tx, initial_w, max_iters, gamma):
+    # start the logistic regression
+    w = initial_w
+    for n in range(max_iters):
+        # get loss and update w.
+        w, loss = logistic_learning_by_gradient_descent(y, tx, w, gamma)
+    
+    return w, loss
+
+
+def calculate_hessian(y, tx, w):
+    """return the Hessian of the loss function.
+
+    Args:
+        y:  shape=(N, 1)
+        tx: shape=(N, D)
+        w:  shape=(D, 1) 
+
+    Returns:
+        a hessian matrix of shape=(D, D)"""
+    N = y.shape[0]
+    S = np.zeros((N,N))
+    for n in range(N):
+        S[n, n] = sigmoid(tx[n,:].T@w)*(1 - sigmoid(tx[n,:].T@w))
+    
+    return (1/N)*tx.T@S@tx
+
+def logistic_regression_loss_gradient_hessian(y, tx, w):
+    """return the loss, gradient of the loss, and hessian of the loss.
+
+    Args:
+        y:  shape=(N, 1)
+        tx: shape=(N, D)
+        w:  shape=(D, 1) 
+
+    Returns:
+        loss: scalar number
+        gradient: shape=(D, 1) 
+        hessian: shape=(D, D)"""
+    
+    loss        = calculate_logistic_loss(y, tx, w)
+    gradient    = calculate_logistic_gradient(y, tx, w)
+    hessian     = calculate_hessian(y, tx, w)
+
+    return (loss, gradient, hessian)
+
+def logistic_learning_by_newton_method(y, tx, w, gamma):
+    """
+    Do one step of Newton's method.
+    Return the loss and updated w.
+
+    Args:
+        y:  shape=(N, 1)
+        tx: shape=(N, D)
+        w:  shape=(D, 1)
+        gamma: scalar
+
+    Returns:
+        loss: scalar number
+        w: shape=(D, 1)"""
+    loss, gradient, hessian = logistic_regression_loss_gradient_hessian(y, tx, w)
+    
+    new_w = w - gamma*np.linalg.solve(hessian, gradient)
+    return new_w, loss
+
+
+def logistic_regression_newton_method(y, tx, initial_w, max_iters, gamma):
+    w = initial_w
+    for n in range(max_iters):
+        w, loss = logistic_learning_by_newton_method(y, tx, w, gamma)
+    
+    return w, loss
+
+
+def logistic_regression(y, tx, initial_w, max_iters, gamma, gd=True):
+    if gd:
+        return logistic_regression_gradient_descent(y, tx, initial_w, max_iters, gamma)
+    return logistic_regression_newton_method(y, tx, initial_w, max_iters, gamma)
 
 
 """
 REGULARIZED LOGISTIC REGRESSION
 """
 
-# TODO : complete
+def penalized_logistic_regression(y, tx, w, lambda_):
+    """return the loss and gradient.
+
+    Args:
+        y:  shape=(N, 1)
+        tx: shape=(N, D)
+        w:  shape=(D, 1)
+        lambda_: scalar
+
+    Returns:
+        loss: scalar number
+        gradient: shape=(D, 1)"""
+    
+    logistic_gradient = calculate_logistic_gradient(y, tx, w)
+    gradient = logistic_gradient + 2*lambda_*w
+
+    loss = calculate_logistic_loss(y, tx, w) + lambda_*w.T@w
+
+    return loss[0,0], gradient
+
+def learning_by_penalized_gradient(y, tx, w, gamma, lambda_):
+    """
+    Do one step of gradient descent, using the penalized logistic regression.
+    Return the loss and updated w.
+
+    Args:
+        y:  shape=(N, 1)
+        tx: shape=(N, D)
+        w:  shape=(D, 1)
+        gamma: scalar
+        lambda_: scalar
+
+    Returns:
+        loss: scalar number
+        w: shape=(D, 1)"""
+    loss, penalized_gradient = penalized_logistic_regression(y, tx, w, lambda_)
+    
+    new_w = w - gamma*penalized_gradient
+    return new_w, loss
+
+
+
+def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma):
+    w = initial_w
+    for n in range(max_iters):
+        w, loss = learning_by_penalized_gradient(y, tx, w, gamma, lambda_)
+    
+    return w, loss
