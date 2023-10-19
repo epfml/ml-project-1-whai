@@ -204,7 +204,7 @@ def calculate_logistic_loss(y, tx, w):
             + (1 - y[i]) * np.log(1 - sigmoid(tx[i, :] @ w))
         )
 
-    return loss[0]
+    return loss
 
 
 def calculate_logistic_gradient(y, tx, w):
