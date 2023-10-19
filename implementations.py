@@ -7,8 +7,8 @@ def compute_mse_loss(y, tx, w):
 
     Args:
         y: shape=(N, )
-        tx: shape=(N,2)
-        w: shape=(2,). The vector of model parameters.
+        tx: shape=(N,D), D is the number of features.
+        w: shape=(D,). The vector of model parameters.
 
     Returns:
         the value of the loss (a scalar), corresponding to the input parameters w.
@@ -27,8 +27,8 @@ def compute_gradient(y, tx, w):
 
     Args:
         y: shape=(N, )
-        tx: shape=(N,2)
-        w: shape=(2, ). The vector of model parameters.
+        tx: shape=(N,D), D is the number of features.
+        w: shape=(D, ). The vector of model parameters.
 
     Returns:
         An array of shape (2, ) (same shape as w), containing the gradient of the loss at w.
@@ -43,14 +43,14 @@ def mean_squared_error_gd(y, tx, initial_w, max_iters, gamma):
 
     Args:
         y: shape=(N, )
-        tx: shape=(N,2)
-        initial_w: shape=(2, ). The initial guess (or the initialization) for the model parameters
+        tx: shape=(N,D), D is the number of features.
+        initial_w: shape=(D, ). The initial guess (or the initialization) for the model parameters
         max_iters: a scalar denoting the total number of iterations of GD
         gamma: a scalar denoting the stepsize
 
     Returns:
         losses: a list of length max_iters containing the loss value (scalar) for each iteration of GD
-        ws: a list of length max_iters containing the model parameters as numpy arrays of shape (2, ), for each iteration of GD
+        ws: a list of length max_iters containing the model parameters as numpy arrays of shape (D, ), for each iteration of GD
     """
     # Define parameters to store w and loss
     w = initial_w
@@ -73,11 +73,11 @@ def compute_stoch_gradient(y, tx, w, batch_size=1):
 
     Args:
         y: shape=(N, )
-        tx: shape=(N,2)
-        w: shape=(2, ). The vector of model parameters.
+        tx: shape=(N,D), D is the number of features.
+        w: shape=(D, ). The vector of model parameters.
 
     Returns:
-        An array of shape (2, ) (same shape as w), containing the stochastic gradient of the loss at w.
+        An array of shape (D, ) (same shape as w), containing the stochastic gradient of the loss at w.
     """
 
     mini_batch = next(batch_iter(y, tx, batch_size, num_batches=1, shuffle=True))
@@ -93,15 +93,15 @@ def mean_squared_error_sgd(y, tx, initial_w, max_iters, gamma, batch_size=1):
 
     Args:
         y: shape=(N, )
-        tx: shape=(N,2)
-        initial_w: shape=(2, ). The initial guess (or the initialization) for the model parameters
+        tx: shape=(N,D), D is the number of features.
+        initial_w: shape=(D, ). The initial guess (or the initialization) for the model parameters
         batch_size: a scalar denoting the number of data points in a mini-batch used for computing the stochastic gradient
         max_iters: a scalar denoting the total number of iterations of SGD
         gamma: a scalar denoting the stepsize
 
     Returns:
         losses: a list of length max_iters containing the loss value (scalar) for each iteration of SGD
-        ws: a list of length max_iters containing the model parameters as numpy arrays of shape (2, ), for each iteration of SGD
+        ws: a list of length max_iters containing the model parameters as numpy arrays of shape (D, ), for each iteration of SGD
     """
 
     w = initial_w
@@ -188,8 +188,8 @@ def calculate_logistic_loss(y, tx, w):
 
     Args:
         y:  shape=(N, 1)
-        tx: shape=(N, D)
-        w:  shape=(D, 1)
+        tx: shape=(N, D), D is the number of features.
+        w:  shape=(D,)
 
     Returns:
         a non-negative loss"""
@@ -198,14 +198,15 @@ def calculate_logistic_loss(y, tx, w):
     assert tx.shape[1] == w.shape[0]
     assert w.shape[1]==1, "weights not the right shape"
 
-    loss = 0
-    for i in range(y.shape[0]):
-        loss += -(1 / y.shape[0]) * (
-            y[i] * np.log(sigmoid(tx[i, :] @ w))
-            + (1 - y[i]) * np.log(1 - sigmoid(tx[i, :] @ w))
+    return (
+        -1
+        / y.shape[0]
+        * sum(
+            y[i] * np.log(sigmoid(tx[i].T @ w))
+            + (1 - y[i]) * np.log(1 - sigmoid(tx[i].T @ w))
+            for i in range(y.shape[0])
         )
-
-    return loss[0]
+    )
 
 
 def calculate_logistic_gradient(y, tx, w):
@@ -213,30 +214,13 @@ def calculate_logistic_gradient(y, tx, w):
 
     Args:
         y:  shape=(N, 1)
-        tx: shape=(N, D)
-        w:  shape=(D, 1)
+        tx: shape=(N, D), D is the number of features.
+        w:  shape=(D,)
 
     Returns:
-        a vector of shape (D, 1)"""
+        a vector of shape (D,)"""
 
-    gradient = 0
-    N = y.shape[0]
-
-    for i in range(N):
-        gradient += -(1 / N) * (
-            y[i]
-            * (1 / (sigmoid(tx[i, :] @ w)))
-            * sigmoid(tx[i, :] @ w)
-            * (1 - sigmoid(tx[i, :] @ w))
-            * tx[i, :].T
-            - (1 - y[i])
-            * (1 / (1 - sigmoid(tx[i, :] @ w)))
-            * sigmoid(tx[i, :] @ w)
-            * (1 - sigmoid(tx[i, :] @ w))
-            * tx[i, :].T
-        )
-
-    return gradient.reshape((-1, 1))
+    return 1 / y.shape[0] * tx.T @ (sigmoid(tx @ w) - y)
 
 
 def logistic_learning_by_gradient_descent(y, tx, w, gamma):
@@ -245,19 +229,18 @@ def logistic_learning_by_gradient_descent(y, tx, w, gamma):
 
     Args:
         y:  shape=(N, 1)
-        tx: shape=(N, D)
-        w:  shape=(D, 1)
+        tx: shape=(N, D), D is the number of features.
+        w:  shape=(D,)
         gamma: float
 
     Returns:
         loss: scalar number
-        w: shape=(D, 1)"""
+        w: shape=(D,)"""
 
     gradient = calculate_logistic_gradient(y, tx, w)
-    new_w = w - gamma * gradient
-    new_loss = calculate_logistic_loss(y, tx, new_w)
-
-    return new_w, new_loss
+    w -= gamma * gradient
+    loss = calculate_logistic_loss(y, tx, w)
+    return loss, w
 
 
 def logistic_regression_gradient_descent(y, tx, initial_w, max_iters, gamma):
@@ -267,7 +250,7 @@ def logistic_regression_gradient_descent(y, tx, initial_w, max_iters, gamma):
 
     for n in range(max_iters):
         # get loss and update w.
-        w, loss = logistic_learning_by_gradient_descent(y, tx, w, gamma)
+        loss, w = logistic_learning_by_gradient_descent(y, tx, w, gamma)
 
     return w, loss
 
@@ -277,17 +260,14 @@ def calculate_hessian(y, tx, w):
 
     Args:
         y:  shape=(N, 1)
-        tx: shape=(N, D)
-        w:  shape=(D, 1)
+        tx: shape=(N, D), D is the number of features.
+        w:  shape=(D,)
 
     Returns:
         a hessian matrix of shape=(D, D)"""
-    N = y.shape[0]
-    S = np.zeros((N, N))
-    for n in range(N):
-        S[n, n] = sigmoid(tx[n, :].T @ w) * (1 - sigmoid(tx[n, :].T @ w))
-
-    return (1 / N) * tx.T @ S @ tx
+    prediction = np.diag(sigmoid(tx @ w).T[0])
+    s = np.multiply(prediction, (1 - prediction))
+    return (1 / y.shape[0]) * (tx.T @ s @ tx)
 
 
 def logistic_regression_loss_gradient_hessian(y, tx, w):
@@ -295,19 +275,18 @@ def logistic_regression_loss_gradient_hessian(y, tx, w):
 
     Args:
         y:  shape=(N, 1)
-        tx: shape=(N, D)
-        w:  shape=(D, 1)
+        tx: shape=(N, D), D is the number of features.
+        w:  shape=(D,)
 
     Returns:
         loss: scalar number
-        gradient: shape=(D, 1)
+        gradient: shape=(D,)
         hessian: shape=(D, D)"""
 
     loss = calculate_logistic_loss(y, tx, w)
     gradient = calculate_logistic_gradient(y, tx, w)
     hessian = calculate_hessian(y, tx, w)
-
-    return (loss, gradient, hessian)
+    return loss, gradient, hessian
 
 
 def logistic_learning_by_newton_method(y, tx, w, gamma):
@@ -317,18 +296,18 @@ def logistic_learning_by_newton_method(y, tx, w, gamma):
 
     Args:
         y:  shape=(N, 1)
-        tx: shape=(N, D)
-        w:  shape=(D, 1)
+        tx: shape=(N, D), D is the number of features.
+        w:  shape=(D,)
         gamma: scalar
 
     Returns:
         loss: scalar number
-        w: shape=(D, 1)"""
+        w: shape=(D,)"""
     loss, gradient, hessian = logistic_regression_loss_gradient_hessian(y, tx, w)
 
-    new_w = w - gamma * np.linalg.solve(hessian, gradient)
-    new_loss = calculate_logistic_loss(y, tx, new_w)
-    return new_w, new_loss
+    w -= gamma * np.linalg.solve(hessian, gradient)
+    loss = calculate_logistic_loss(y, tx, w)
+    return w, loss
 
 
 def logistic_regression_newton_method(y, tx, initial_w, max_iters, gamma):
@@ -337,14 +316,14 @@ def logistic_regression_newton_method(y, tx, initial_w, max_iters, gamma):
 
     Args:
         y:  shape=(N, 1)
-        tx: shape=(N, D)
+        tx: shape=(N, D), D is the number of features.
         max_iter: int
-        initial_w:  shape=(D, 1)
+        initial_w:  shape=(D,)
         gamma: scalar
         lambda_: scalar
 
     Returns:
-        w: shape=(D, 1)
+        w: shape=(D,)
         loss: scalar number
     """
     w = initial_w
@@ -362,15 +341,15 @@ def logistic_regression(y, tx, initial_w, max_iters, gamma, gd=True):
 
     Args:
         y:  shape=(N, 1)
-        tx: shape=(N, D)
+        tx: shape=(N, D), D is the number of features.
         max_iter: int
-        initial_w:  shape=(D, 1)
+        initial_w:  shape=(D,)
         gamma: scalar
         lambda_: scalar
         gd: bool
 
     Returns:
-        w: shape=(D, 1)
+        w: shape=(D,)
         loss: scalar number
     """
     if gd:
@@ -388,20 +367,18 @@ def penalized_logistic_regression(y, tx, w, lambda_):
 
     Args:
         y:  shape=(N, 1)
-        tx: shape=(N, D)
-        w:  shape=(D, 1)
+        tx: shape=(N, D), D is the number of features.
+        w:  shape=(D,)
         lambda_: scalar
 
     Returns:
         loss: scalar number
-        gradient: shape=(D, 1)"""
+        gradient: shape=(D,)"""
 
-    logistic_gradient = calculate_logistic_gradient(y, tx, w)
-    gradient = logistic_gradient + 2 * lambda_ * w
+    loss = calculate_logistic_loss(y, tx, w) + lambda_ * np.squeeze(w.T @ w)
+    gradient = calculate_logistic_gradient(y, tx, w) + 2 * lambda_ * w
 
-    loss = calculate_logistic_loss(y, tx, w) + lambda_ * w.T @ w
-
-    return loss[0, 0], gradient
+    return loss, gradient
 
 
 def learning_by_penalized_gradient(y, tx, w, gamma, lambda_):
@@ -411,19 +388,19 @@ def learning_by_penalized_gradient(y, tx, w, gamma, lambda_):
 
     Args:
         y:  shape=(N, 1)
-        tx: shape=(N, D)
-        w:  shape=(D, 1)
+        tx: shape=(N, D), D is the number of features.
+        w:  shape=(D,)
         gamma: scalar
         lambda_: scalar
 
     Returns:
         loss: scalar number
-        w: shape=(D, 1)"""
+        w: shape=(D,)"""
     loss, penalized_gradient = penalized_logistic_regression(y, tx, w, lambda_)
 
-    new_w = w - gamma * penalized_gradient
-    new_loss = calculate_logistic_loss(y, tx, new_w)
-    return new_w, new_loss
+    w -= gamma * penalized_gradient
+    new_loss = calculate_logistic_loss(y, tx, w)
+    return w, new_loss
 
 
 def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma):
@@ -432,14 +409,14 @@ def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma):
 
     Args:
         y:  shape=(N, 1)
-        tx: shape=(N, D)
+        tx: shape=(N, D), D is the number of features.
         max_iter: int
-        initial_w:  shape=(D, 1)
+        initial_w:  shape=(D,)
         gamma: scalar
         lambda_: scalar
 
     Returns:
-        w: shape=(D, 1)
+        w: shape=(D,)
         loss: scalar number
     """
     w = initial_w
@@ -448,6 +425,8 @@ def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma):
     for n in range(max_iters):
         w, loss = learning_by_penalized_gradient(y, tx, w, gamma, lambda_)
 
+    print("Loss: ", loss)
+    print("W: ", w)
     return w, loss
 
 
