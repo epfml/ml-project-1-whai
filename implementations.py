@@ -196,15 +196,18 @@ def calculate_logistic_loss(y, tx, w):
 
     assert y.shape[0] == tx.shape[0]
     assert tx.shape[1] == w.shape[0]
+    #Old version:
+    # loss = 0
+    # for i in range(y.shape[0]):
+    #     loss += -(1 / y.shape[0]) * (
+    #         y[i] * np.log(sigmoid(tx[i, :] @ w))
+    #         + (1 - y[i]) * np.log(1 - sigmoid(tx[i, :] @ w))
+    #     )
 
-    loss = 0
-    for i in range(y.shape[0]):
-        loss += -(1 / y.shape[0]) * (
-            y[i] * np.log(sigmoid(tx[i, :] @ w))
-            + (1 - y[i]) * np.log(1 - sigmoid(tx[i, :] @ w))
-        )
-
-    return loss[0]
+    # return loss[0]
+    losses=-y.T.dot(np.log(sigmoid(tx.dot(w))))-(1-y.T).dot(np.log(1-sigmoid(tx.dot(w))))
+    # ***************************************************
+    return np.sum(losses)/y.shape[0]
 
 
 def calculate_logistic_gradient(y, tx, w):
@@ -217,10 +220,9 @@ def calculate_logistic_gradient(y, tx, w):
 
     Returns:
         a vector of shape (D, 1)"""
-
     gradient = 0
     N = y.shape[0]
-
+    
     for i in range(N):
         gradient += -(1 / N) * (
             y[i]
@@ -236,7 +238,7 @@ def calculate_logistic_gradient(y, tx, w):
         )
 
     return gradient.reshape((-1, 1))
-
+    
 
 def logistic_learning_by_gradient_descent(y, tx, w, gamma):
     """
@@ -251,13 +253,13 @@ def logistic_learning_by_gradient_descent(y, tx, w, gamma):
     Returns:
         loss: scalar number
         w: shape=(D, 1)"""
-
+    
     gradient = calculate_logistic_gradient(y, tx, w)
     new_w = w - gamma * gradient
     new_loss = calculate_logistic_loss(y, tx, new_w)
 
     return new_w, new_loss
-
+    
 
 def logistic_regression_gradient_descent(y, tx, initial_w, max_iters, gamma):
     # start the logistic regression
@@ -448,3 +450,40 @@ def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma):
         w, loss = learning_by_penalized_gradient(y, tx, w, gamma, lambda_)
 
     return w, loss
+
+def split_data(x, y, ratio, seed=1):
+    """
+    split the dataset based on the split ratio. If ratio is 0.8
+    you will have 80% of your data set dedicated to training
+    and the rest dedicated to testing. If ratio times the number of samples is not round
+    you can use np.floor. Also check the documentation for np.random.permutation,
+    it could be useful.
+    Args:
+        x: numpy array of shape (N,), N is the number of samples.
+        y: numpy array of shape (N,).
+        ratio: scalar in [0,1]
+        seed: integer.
+    Returns:
+        x_tr: numpy array containing the train data.
+        x_te: numpy array containing the test data.
+        y_tr: numpy array containing the train labels.
+        y_te: numpy array containing the test labels.
+    >>> split_data(np.arange(13), np.arange(13), 0.8, 1)
+    (array([ 2,  3,  4, 10,  1,  6,  0,  7, 12,  9]), array([ 8, 11,  5]), array([ 2,  3,  4, 10,  1,  6,  0,  7, 12,  9]), array([ 8, 11,  5]))
+    """
+    # set seed
+    np.random.seed(seed)
+    # ***************************************************
+    # INSERT YOUR CODE HERE
+    # split the data based on the given ratio: TODO
+    n=x.shape[0]
+    indices = np.random.permutation(n)
+    index_split = int(np.floor(ratio * n))
+    index_tr = indices[:index_split]
+    index_te = indices[index_split:]
+    # create split
+    x_tr = x[index_tr]
+    x_te = x[index_te]
+    y_tr = y[index_tr]
+    y_te = y[index_te]
+    return x_tr, x_te, y_tr, y_te
