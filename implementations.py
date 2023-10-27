@@ -181,8 +181,7 @@ def sigmoid(t):
     Returns:
         scalar or numpy array"""
 
-    sigmoid = 1 / (1 + np.exp(-t))
-    return sigmoid
+    return 1.0 / (1 + np.exp(-t.astype(float)))
 
 
 def calculate_logistic_loss(y, tx, w):
@@ -200,7 +199,7 @@ def calculate_logistic_loss(y, tx, w):
     assert tx.shape[1] == w.shape[0]
 
     return (
-        -1
+        -1.0
         / y.shape[0]
         * sum(
             y[i] * np.log(sigmoid(tx[i].T @ w))
@@ -379,7 +378,7 @@ def my_reg_logistic_regression(
 
     for n in range(max_iters):
         w, loss = learning_by_penalized_gradient(y_tr, x_tr, w, gamma, lambda_)
-        losses.append(loss)
-        gen_losses.append(calculate_logistic_loss(y_val, x_val, w))
+        losses.append(np.abs(loss))
+        gen_losses.append(np.abs(calculate_logistic_loss(y_val, x_val, w)))
 
     return w, losses, gen_losses
