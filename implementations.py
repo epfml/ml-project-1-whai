@@ -181,7 +181,7 @@ def sigmoid(t):
     Returns:
         scalar or numpy array"""
 
-    return 1.0 / (1 + np.exp(-t.astype(float)))
+    return 1.0 / (1 + np.exp(-t))
 
 
 def calculate_logistic_loss(y, tx, w):
