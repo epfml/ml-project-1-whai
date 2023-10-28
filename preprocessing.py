@@ -49,7 +49,7 @@ def replace_nan(df, column, value, names_map):
     nan_indices = np.where(np.isnan(df[:, names_map[column]]) + (df[:, names_map[column]]==np.nan))
     df[:, names_map[column]][nan_indices] = value
 
-def clean_data(x_raw, y_raw, names_map, is_train_data=True, new_mean_dico=None, new_median_dico=None):
+
 def clean_data(x_raw, y_raw, names_map, is_train_data=True, new_mean_dico=None, new_median_dico=None):
     """
     Preprocessing of the data for the feature matrix, and the output vector.
