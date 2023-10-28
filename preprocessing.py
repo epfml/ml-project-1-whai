@@ -50,30 +50,34 @@ def replace_nan(df, column, value, names_map):
     df[:, names_map[column]][nan_indices] = value
 
 
-def clean_data(x_raw, y_raw, names_map, is_train_data=True, mean_dico=None, median_dico=None):
+def clean_data(names_map, x_raw, y_raw=None, is_y=False, is_train_data=True, mean_dico=None, median_dico=None):
     """
     Preprocessing of the data for the feature matrix, and the output vector.
     
     Input:
-        x_raw np.array                  : raw input data
+        names_map (dictionnary)         : dictionnary mapping the features to their index
+        x_raw (N,D)-array               : raw input data
         y_raw (N,)-array                : raw output data
-        is_train_data (boolean)         : True if the data is the training data, False otherwise
-        new_mean_dico (dictionnary)     : means of the features in the training data if provided
-        new_median_dico (dictionnary)   : medians of the features in the training data if provided
-        x_raw np.array                  : raw input data
-        y_raw (N,)-array                : raw output data
+        is_y (boolean)                  : True if we have the output feature y, False otherwise
         is_train_data (boolean)         : True if the data is the training data, False otherwise
         new_mean_dico (dictionnary)     : means of the features in the training data if provided
         new_median_dico (dictionnary)   : medians of the features in the training data if provided
 
     Output:
-        x: input data with the preprocessing applied
-        y: output data with the preprocessing applied
+        x                               : input data with the preprocessing applied
+        y                               : output data with the preprocessing applied
+        new_mean_dico (dictionnary)     : means of the features in the training data if training data, empty-set otherwise
+        new_median_dico (dictionnary)   : medians of the features in the training data if training data, empty-set otherwise
     """
-    x, y = x_raw.copy(), y_raw.copy()
+    x   = x_raw.copy()
+    try:
+        y = y_raw.copy()
+    except:
+        y = None
     
     #replaces -1 by 0 in the output feature
-    y = np.where(y == -1, 0, y)
+    if is_y:
+        y = np.where(y == -1, 0, y)
 
     #Converting the weights to kg, and asigning lacking answers to NaN
     array = x[:, names_map["WEIGHT2"]]
@@ -121,7 +125,8 @@ def clean_data(x_raw, y_raw, names_map, is_train_data=True, mean_dico=None, medi
     weekly_frequency_scaler(x, "STRENGTH", names_map)
 
     #Transformation hashmap
-    dico_transfos={"GENHLTH":{7:np.nan,8:np.nan,9:np.nan},"POORHLTH":{88:0,77:np.nan,99:np.nan},"HLTHPLN1":{7:np.nan,9:np.nan},"CHECKUP1":{8:15,7:np.nan,9:np.nan},
+    dico_transfos={
+                "GENHLTH":{7:np.nan,8:np.nan,9:np.nan},"POORHLTH":{88:0,77:np.nan,99:np.nan},"HLTHPLN1":{7:np.nan,9:np.nan},"CHECKUP1":{8:15,7:np.nan,9:np.nan},
                 "BPMEDS":{7:np.nan,9:np.nan}, "TOLDHI2":{7:np.nan,9:np.nan}, "PHYSHLTH":{88:0,77:np.nan,99:np.nan},
                 "MENTHLTH":{88:0,77:np.nan,99:np.nan}, "CVDSTRK3":{7:np.nan, 9:np.nan}, "HLTHPLN1":{9:np.nan}, "CHCOCNCR":{7:np.nan, 9:np.nan},
                 "HAVARTH3":{7:np.nan, 9:np.nan}, "CHCKIDNY":{7:np.nan, 9:np.nan}, "DIABETE3":{7:np.nan, 9:np.nan}, "CHCCOPD1":{7:np.nan, 9:np.nan},
@@ -190,10 +195,43 @@ def clean_data(x_raw, y_raw, names_map, is_train_data=True, mean_dico=None, medi
     else:
         #replace the NaN with the mean
         for feature in mean_features:
-            replace_nan(x, feature, names_map, mean_dico[feature])
+            replace_nan(x, feature, mean_dico[feature], names_map)
 
         #replace the NaN with the median
         for feature in median_features:
-            replace_nan(x, feature, names_map, median_dico[feature])
+            replace_nan(x, feature, median_dico[feature], names_map)
 
     return x, y, new_mean_dico, new_median_dico
+
+
+def scale_data(x, names_map, is_train_data=True, train_mean=None, train_std=None):
+    """
+    Scales the data.
+    
+    Input:
+        x (N,D)-array                    : output data
+        names_map (dictionnary)         : dictionnary mapping the features to their index
+        is_train_data (boolean)         : True if the data is the training data, False otherwise
+        train_mean (dictionnary)        : means of the features in the training data
+        train_std (dictionnary)         : standard deviations of the features in the training data
+
+    Output:
+        x: input data with the scaling applied
+        y: output data with the scaling applied
+    """
+    x_scaled = x.copy()
+
+    new_train_mean  = {}
+    new_train_std   = {}
+
+    for feature in (names_map):
+        if is_train_data:
+            new_train_mean[feature] = np.nanmean(x[:, names_map[feature]])
+            new_train_std[feature]  = np.nanstd(x[:, names_map[feature]])
+
+            if (new_train_std[feature] != 0):
+                x_scaled[:, names_map[feature]] = (x_scaled[:, names_map[feature]] - new_train_mean[feature])/new_train_std[feature]
+        elif (train_std[feature]!=0):
+            x_scaled[:, names_map[feature]] = (x_scaled[:, names_map[feature]] - train_mean[feature])/train_std[feature]
+    
+    return x_scaled, new_train_mean, new_train_std
