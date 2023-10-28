@@ -50,7 +50,7 @@ def replace_nan(df, column, value, names_map):
     df[:, names_map[column]][nan_indices] = value
 
 
-def clean_data(x_raw, y_raw, names_map, is_train_data=True, new_mean_dico=None, new_median_dico=None):
+def clean_data(x_raw, y_raw, names_map, is_train_data=True, mean_dico=None, median_dico=None):
     """
     Preprocessing of the data for the feature matrix, and the output vector.
     
@@ -190,10 +190,10 @@ def clean_data(x_raw, y_raw, names_map, is_train_data=True, new_mean_dico=None, 
     else:
         #replace the NaN with the mean
         for feature in mean_features:
-            replace_nan(x, feature, names_map, new_mean_dico[feature])
+            replace_nan(x, feature, names_map, mean_dico[feature])
 
         #replace the NaN with the median
         for feature in median_features:
-            replace_nan(x, feature, names_map, new_median_dico[feature])
+            replace_nan(x, feature, names_map, median_dico[feature])
 
     return x, y, new_mean_dico, new_median_dico
