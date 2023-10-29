@@ -464,38 +464,26 @@ def build_poly(x, degree):
     return feature_matrix
 
 
-def build_poly_expansion_with_interaction_features(
-    x, features_names: list, max_degree, interactions=False
-):
+def build_poly_expension_with_interaction_features(x, features_names: list, max_degree, interactions=False):
     """Build interaction features from x"""
-    # poly = np.array([[x[i, j] ** degree for j in range(x.shape[1]) for degree in range(1, max_degree + 1)] + [x[i, k] * x[i, l] for k in range(x.shape[1]) for l in range(k+1, x.shape[1])] for i in range(x.shape[0])])
-    # new_features_name=[feature+"**"+str(degree) for feature in features_names for degree in  range(1, max_degree + 1)]+[features_names[k]+"*"+features_names[l] for k in range(x.shape[1]) for l in range(k+1, x.shape[1])]
-
-    poly = []
-    for i in range(x.shape[0]):
-        poly.append([])
-        for j in range(x.shape[1]):
-            for degree in range(1, max_degree + 1):
-                poly[i].append(x[i, j] ** degree)
-
-        # Add interaction features if needed (CAN MAKE MATRIX TOO LARGE)
-        if interactions:
-            for j in range(x.shape[1]):
-                for k in range(j + 1, x.shape[1]):
-                    poly[i].append(x[i, j] * x[i, k])
+    if interactions:
+        poly = np.zeros((x.shape[0], max_degree * x.shape[1] + (x.shape[1] * (x.shape[1] - 1)) // 2))
+    else:
+        poly = np.zeros((x.shape[0], max_degree * x.shape[1]))
 
     new_features_name = []
+    index = 0
     for j in range(x.shape[1]):
         for degree in range(1, max_degree + 1):
+            poly[:, index] = x[:, j] ** degree
             new_features_name.append(features_names[j] + "**" + str(degree))
-
-    # Add interaction features names if needed
+            index += 1
+    
     if interactions:
         for j in range(x.shape[1]):
             for k in range(j + 1, x.shape[1]):
+                poly[:, index] = x[:, j] * x[:, k]
                 new_features_name.append(features_names[j] + "*" + features_names[k])
-
-    poly = np.array(poly)
-    new_features_name = np.array(new_features_name)
+                index += 1
 
     return poly, new_features_name
