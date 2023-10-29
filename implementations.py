@@ -437,4 +437,25 @@ def compute_scores_linear_model(x,w,y,threshold=None,apply_sigmoid=False):
     recall=TP/(TP+FN)
     f1=2*precision*recall/(precision+recall)
     return precision,recall,f1
+
+def build_poly(x, degree):
+    """polynomial basis functions for input data x, for j=0 up to j=degree.
+
+    Args:
+        x: numpy array of shape (N,), N is the number of samples.
+        degree: integer.
+
+    Returns:
+        poly: numpy array of shape (N,d+1)
+
+    >>> build_poly(np.array([0.0, 1.5]), 2)
+    array([[1.  , 0.  , 0.  ],
+           [1.  , 1.5 , 2.25]])
+    """
+    feature_matrix = np.zeros((x.shape[0], degree * x.shape[1]))
+    
+    for i in range(1, degree + 1):
+        feature_matrix[:, (i - 1) * x.shape[1]:i * x.shape[1]] = x ** i
+        
+    return feature_matrix
     
