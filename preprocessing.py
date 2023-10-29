@@ -96,7 +96,7 @@ def clean_data(names_map, x_raw, y_raw=None, is_y=False, is_train_data=True, mea
     none_indices        = np.where((array == 9998) + (array == 7777))
 
     #conversion to cm
-    x[:, names_map["HEIGHT3"]][imperial_indices] = 30.48 * x[:, names_map["HEIGHT3"]][imperial_indices]//100 + 2.54*x[:, names_map["HEIGHT3"]][imperial_indices]%100
+    x[:, names_map["HEIGHT3"]][imperial_indices] = x[:, names_map["HEIGHT3"]][imperial_indices]//100 * 30.48 + x[:, names_map["HEIGHT3"]][imperial_indices]%100 * 2.54
     x[:, names_map["HEIGHT3"]][cm_indices] = x[:, names_map["HEIGHT3"]][cm_indices]%9000
     x[:, names_map["HEIGHT3"]][none_indices] = np.nan
 
