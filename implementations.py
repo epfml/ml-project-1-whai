@@ -458,4 +458,12 @@ def build_poly(x, degree):
         feature_matrix[:, (i - 1) * x.shape[1]:i * x.shape[1]] = x ** i
         
     return feature_matrix
+
+
+def build_poly_expension_with_interaction_features(x,features_names:list,max_degree):
+    """Build interaction features from x"""
+
+    poly=np.array([[x[i,k]**degree for k in range(x.shape[1]) for degree in range(3,max_degree+1)]+[x[i,k]*col for col in [1]+[x[i,j] for j in range(x.shape[1])] for k in range(x.shape[1])] for i in range(x.shape[0])])
+    new_features_name=[feature+"**"+str(degree) for feature in features_names for degree in range(x.shape[1])]+[feature1+"*"+feature2 for feature1 in features_names for feature2 in features_names]
+    return poly,new_features_name
     
