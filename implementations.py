@@ -181,8 +181,7 @@ def sigmoid(t):
     Returns:
         scalar or numpy array"""
 
-    sigmoid = 1 / (1 + np.exp(-t))
-    return sigmoid
+    return 1.0 / (1 + np.exp(-t))
 
 
 def calculate_logistic_loss(y, tx, w):
@@ -200,7 +199,7 @@ def calculate_logistic_loss(y, tx, w):
     assert tx.shape[1] == w.shape[0]
 
     return (
-        -1
+        -1.0
         / y.shape[0]
         * sum(
             y[i] * np.log(sigmoid(tx[i].T @ w))
@@ -379,7 +378,63 @@ def my_reg_logistic_regression(
 
     for n in range(max_iters):
         w, loss = learning_by_penalized_gradient(y_tr, x_tr, w, gamma, lambda_)
-        losses.append(loss)
-        gen_losses.append(calculate_logistic_loss(y_val, x_val, w))
+        losses.append(np.abs(loss))
+        gen_losses.append(np.abs(calculate_logistic_loss(y_val, x_val, w)))
 
     return w, losses, gen_losses
+
+def split_data(x, y, ratio, seed=1):
+    """
+    split the dataset based on the split ratio. If ratio is 0.8
+    you will have 80% of your data set dedicated to training
+    and the rest dedicated to testing. If ratio times the number of samples is not round
+    you can use np.floor. Also check the documentation for np.random.permutation,
+    it could be useful.
+    Args:
+        x: numpy array of shape (N,), N is the number of samples.
+        y: numpy array of shape (N,).
+        ratio: scalar in [0,1]
+        seed: integer.
+    Returns:
+        x_tr: numpy array containing the train data.
+        x_te: numpy array containing the test data.
+        y_tr: numpy array containing the train labels.
+        y_te: numpy array containing the test labels.
+    >>> split_data(np.arange(13), np.arange(13), 0.8, 1)
+    (array([ 2,  3,  4, 10,  1,  6,  0,  7, 12,  9]), array([ 8, 11,  5]), array([ 2,  3,  4, 10,  1,  6,  0,  7, 12,  9]), array([ 8, 11,  5]))
+    """
+    # set seed
+    np.random.seed(seed)
+
+    n=x.shape[0]
+    indices = np.random.permutation(n)
+    index_split = int(np.floor(ratio * n))
+    index_tr = indices[:index_split]
+    index_te = indices[index_split:]
+    # create split
+    x_tr = x[index_tr]
+    x_te = x[index_te]
+    y_tr = y[index_tr]
+    y_te = y[index_te]
+    return x_tr, x_te, y_tr, y_te
+
+def make_predictions_linear_model(x,w,threshold,apply_sigmoid):
+    w2=w.ravel()
+    y_pred=x.dot(w2.T)
+    if threshold==None:
+        threshold=0.5
+    if apply_sigmoid:
+        y_pred=sigmoid(y_pred)
+    y_pred=np.array([0 if prediction<threshold else 1 for prediction in y_pred])
+    return y_pred
+
+def compute_scores_linear_model(x,w,y,threshold=None,apply_sigmoid=False):
+    y_pred=make_predictions_linear_model(x,w,threshold,apply_sigmoid) 
+    TP=np.sum(np.logical_and(y_pred==1,y==1))
+    FP=np.sum(np.logical_and(y_pred==1,y==0))
+    FN=np.sum(np.logical_and(y_pred==0,y==1))
+    precision=TP/(TP+FP)
+    recall=TP/(TP+FN)
+    f1=2*precision*recall/(precision+recall)
+    return precision,recall,f1
+    
