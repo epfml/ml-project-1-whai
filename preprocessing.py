@@ -204,34 +204,42 @@ def clean_data(names_map, x_raw, y_raw=None, is_y=False, is_train_data=True, mea
     return x, y, new_mean_dico, new_median_dico,interesting_features
 
 
-def scale_data(x, names_map, is_train_data=True, train_mean=None, train_std=None):
+def scale_data(x, is_train_data=True, train_mean=None, train_std=None):
     """
-    Scales the data.
+   Scales the data to have a mean of 0 and a standard deviation of 1.
+   
+   Input:
+       x (N,D)-array               : input data
+       is_train_data (boolean)     : True if the data is the training data, False otherwise
+       train_mean (D,)-array       : means of the features in the training data if provided
+       train_std (D,)-array        : standard deviations of the features in the training data if provided
     
-    Input:
-        x (N,D)-array                    : output data
-        names_map (dictionnary)         : dictionnary mapping the features to their index
-        is_train_data (boolean)         : True if the data is the training data, False otherwise
-        train_mean (dictionnary)        : means of the features in the training data
-        train_std (dictionnary)         : standard deviations of the features in the training data
-
     Output:
-        x: input data with the scaling applied
-        y: output data with the scaling applied
+        x_scaled (N,D)-array        : scaled input data
+        new_train_mean (D,)-array   : means of the features in the training data if training data, None otherwise
+        new_train_std (D,)-array    : standard deviations of the features in the training data if training data, None otherwise
     """
+    
     x_scaled = x.copy()
 
-    new_train_mean  = {}
-    new_train_std   = {}
+    if is_train_data:
+        new_train_mean = np.nanmean(x, axis=0)
+        new_train_std  = np.nanstd(x, axis=0)
 
-    for feature in (names_map):
-        if is_train_data:
-            new_train_mean[feature] = np.nanmean(x[:, names_map[feature]])
-            new_train_std[feature]  = np.nanstd(x[:, names_map[feature]])
+        nonzero_std_indices = np.where(new_train_std > 0)
+        zero_std_indices  = np.where(new_train_std == 0)
 
-            if (new_train_std[feature] != 0):
-                x_scaled[:, names_map[feature]] = (x_scaled[:, names_map[feature]] - new_train_mean[feature])/new_train_std[feature]
-        elif (train_std[feature]!=0):
-            x_scaled[:, names_map[feature]] = (x_scaled[:, names_map[feature]] - train_mean[feature])/train_std[feature]
+        x_scaled[:, nonzero_std_indices] =  (x[:, nonzero_std_indices] - new_train_mean[nonzero_std_indices])/new_train_std[nonzero_std_indices]
+        x_scaled[:, zero_std_indices]   =   (x[:, zero_std_indices] - new_train_mean[zero_std_indices])
+
+    else:
+        nonzero_std_indices = np.where(train_std > 0)
+        zero_std_indices    = np.where(train_std == 0)
+        
+        x_scaled[:, nonzero_std_indices] =  (x[:, nonzero_std_indices] - new_train_mean[nonzero_std_indices])/new_train_std[nonzero_std_indices]
+        x_scaled[:, zero_std_indices]   =   (x[:, zero_std_indices] - new_train_mean[zero_std_indices])
+
+        new_train_mean=None
+        new_train_std=None
     
     return x_scaled, new_train_mean, new_train_std
