@@ -383,6 +383,7 @@ def my_reg_logistic_regression(
 
     return w, losses, gen_losses
 
+
 def split_data(x, y, ratio, seed=1):
     """
     split the dataset based on the split ratio. If ratio is 0.8
@@ -406,7 +407,7 @@ def split_data(x, y, ratio, seed=1):
     # set seed
     np.random.seed(seed)
 
-    n=x.shape[0]
+    n = x.shape[0]
     indices = np.random.permutation(n)
     index_split = int(np.floor(ratio * n))
     index_tr = indices[:index_split]
@@ -418,25 +419,28 @@ def split_data(x, y, ratio, seed=1):
     y_te = y[index_te]
     return x_tr, x_te, y_tr, y_te
 
-def make_predictions_linear_model(x,w,threshold,apply_sigmoid):
-    w2=w.ravel()
-    y_pred=x.dot(w2.T)
-    if threshold==None:
-        threshold=0.5
+
+def make_predictions_linear_model(x, w, threshold, apply_sigmoid):
+    w2 = w.ravel()
+    y_pred = x.dot(w2.T)
+    if threshold == None:
+        threshold = 0.5
     if apply_sigmoid:
-        y_pred=sigmoid(y_pred)
-    y_pred=np.array([0 if prediction<threshold else 1 for prediction in y_pred])
+        y_pred = sigmoid(y_pred)
+    y_pred = np.array([0 if prediction < threshold else 1 for prediction in y_pred])
     return y_pred
 
-def compute_scores_linear_model(x,w,y,threshold=None,apply_sigmoid=False):
-    y_pred=make_predictions_linear_model(x,w,threshold,apply_sigmoid) 
-    TP=np.sum(np.logical_and(y_pred==1,y==1))
-    FP=np.sum(np.logical_and(y_pred==1,y==0))
-    FN=np.sum(np.logical_and(y_pred==0,y==1))
-    precision=TP/(TP+FP)
-    recall=TP/(TP+FN)
-    f1=2*precision*recall/(precision+recall)
-    return precision,recall,f1
+
+def compute_scores_linear_model(x, w, y, threshold=None, apply_sigmoid=False):
+    y_pred = make_predictions_linear_model(x, w, threshold, apply_sigmoid)
+    TP = np.sum(np.logical_and(y_pred == 1, y == 1))
+    FP = np.sum(np.logical_and(y_pred == 1, y == 0))
+    FN = np.sum(np.logical_and(y_pred == 0, y == 1))
+    precision = TP / (TP + FP)
+    recall = TP / (TP + FN)
+    f1 = 2 * precision * recall / (precision + recall)
+    return precision, recall, f1
+
 
 def build_poly(x, degree):
     """polynomial basis functions for input data x, for j=0 up to j=degree.
@@ -453,16 +457,45 @@ def build_poly(x, degree):
            [1.  , 1.5 , 2.25]])
     """
     feature_matrix = np.zeros((x.shape[0], degree * x.shape[1]))
-    
+
     for i in range(1, degree + 1):
-        feature_matrix[:, (i - 1) * x.shape[1]:i * x.shape[1]] = x ** i
-        
+        feature_matrix[:, (i - 1) * x.shape[1] : i * x.shape[1]] = x**i
+
     return feature_matrix
 
 
-def build_poly_expension_with_interaction_features(x,features_names:list,max_degree):
+def build_poly_expansion_with_interaction_features(
+    x, features_names: list, max_degree, interactions=False
+):
     """Build interaction features from x"""
-    poly = np.array([[x[i, j] ** degree for j in range(x.shape[1]) for degree in range(1, max_degree + 1)] + [x[i, k] * x[i, l] for k in range(x.shape[1]) for l in range(k+1, x.shape[1])] for i in range(x.shape[0])])
-    new_features_name=[feature+"**"+str(degree) for feature in features_names for degree in  range(1, max_degree + 1)]+[features_names[k]+"*"+features_names[l] for k in range(x.shape[1]) for l in range(k+1, x.shape[1])]
-    return poly,new_features_name
-    
+    # poly = np.array([[x[i, j] ** degree for j in range(x.shape[1]) for degree in range(1, max_degree + 1)] + [x[i, k] * x[i, l] for k in range(x.shape[1]) for l in range(k+1, x.shape[1])] for i in range(x.shape[0])])
+    # new_features_name=[feature+"**"+str(degree) for feature in features_names for degree in  range(1, max_degree + 1)]+[features_names[k]+"*"+features_names[l] for k in range(x.shape[1]) for l in range(k+1, x.shape[1])]
+
+    poly = []
+    for i in range(x.shape[0]):
+        poly.append([])
+        for j in range(x.shape[1]):
+            for degree in range(1, max_degree + 1):
+                poly[i].append(x[i, j] ** degree)
+
+        # Add interaction features if needed (CAN MAKE MATRIX TOO LARGE)
+        if interactions:
+            for j in range(x.shape[1]):
+                for k in range(j + 1, x.shape[1]):
+                    poly[i].append(x[i, j] * x[i, k])
+
+    new_features_name = []
+    for j in range(x.shape[1]):
+        for degree in range(1, max_degree + 1):
+            new_features_name.append(features_names[j] + "**" + str(degree))
+
+    # Add interaction features names if needed
+    if interactions:
+        for j in range(x.shape[1]):
+            for k in range(j + 1, x.shape[1]):
+                new_features_name.append(features_names[j] + "*" + features_names[k])
+
+    poly = np.array(poly)
+    new_features_name = np.array(new_features_name)
+
+    return poly, new_features_name
