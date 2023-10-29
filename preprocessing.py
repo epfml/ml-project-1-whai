@@ -167,7 +167,8 @@ def clean_data(names_map, x_raw, y_raw=None, is_y=False, is_train_data=True, mea
                     "ADDEPEV2", "EDUCA", "INCOME2", "QLACTLM2", "USEEQUIP", "BLIND", "DECIDE", "DIFFWALK", "DIFFDRES", "DIFFALON", "SMOKE100", "SMOKDAY2", "USENOW3", "ALCDAY5", "AVEDRNK2",
                     "DRNK3GE5", "MAXDRNKS", "EXERANY2", "SEATBELT", "PNEUVAC3", "ARTHDIS2", "ARTHSOCL", "JOINPAIN", "FLUSHOT6", "DOCTDIAB", "VIREDIF3", "VIGLUMA2", "VIMACDG2", "CIMEMLOS",
                     "CDSOCIAL", "DRADVISE", "HPVADVC2", "_CHISPNC", "_DRDXAR1", "_AGEG5YR", "DROCDY3_", "_CHLDCNT", "_TOTINDA", "_LMTSCL1", "ARTHEDU", "_INCOMG", "_EDUCAG", "_RFCHOL", 
-                    "MISTMNT", "DIABEYE", "_BMI5"]
+                    "MISTMNT", "DIABEYE", "_BMI5", "VIDFCLT2", "ASTHMAGE", "ASERVIST", "CVDASPRN", "RDUCHART", "_LTASTH1", "_CASTHM1", "_ASTHMS1", "_HISPANC", "_SMOKER3", "_RFSMOK3", "DRNKANY5",
+                    "_RFSEAT2", "_PASTRNG", "_PACAT1"]
 
     #list of specific features
     value_features  = ["CRGVMST2", "VICTRCT4", "ARTHEXER", "HPVADSHT", "PCPSARE1"]
@@ -200,7 +201,7 @@ def clean_data(names_map, x_raw, y_raw=None, is_y=False, is_train_data=True, mea
         #replace the NaN with the median
         for feature in median_features:
             replace_nan(x, feature, median_dico[feature], names_map)
-    interesting_features=list(dico_transfos.keys())
+    interesting_features=mean_features+median_features+value_features
     return x, y, new_mean_dico, new_median_dico,interesting_features
 
 
@@ -236,8 +237,8 @@ def scale_data(x, is_train_data=True, train_mean=None, train_std=None):
         nonzero_std_indices = np.where(train_std > 0)
         zero_std_indices    = np.where(train_std == 0)
         
-        x_scaled[:, nonzero_std_indices] =  (x[:, nonzero_std_indices] - new_train_mean[nonzero_std_indices])/new_train_std[nonzero_std_indices]
-        x_scaled[:, zero_std_indices]   =   (x[:, zero_std_indices] - new_train_mean[zero_std_indices])
+        x_scaled[:, nonzero_std_indices] =  (x[:, nonzero_std_indices] - train_mean[nonzero_std_indices])/train_std[nonzero_std_indices]
+        x_scaled[:, zero_std_indices]   =   (x[:, zero_std_indices] - train_mean[zero_std_indices])
 
         new_train_mean=None
         new_train_std=None
