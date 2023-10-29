@@ -420,19 +420,34 @@ def split_data(x, y, ratio, seed=1):
     return x_tr, x_te, y_tr, y_te
 
 
-def make_predictions_linear_model(x, w, threshold, apply_sigmoid):
+def make_predictions_linear_model(x, w, threshold=0.5, apply_sigmoid=False):
     w2 = w.ravel()
     y_pred = x.dot(w2.T)
-    if threshold == None:
-        threshold = 0.5
     if apply_sigmoid:
         y_pred = sigmoid(y_pred)
     y_pred = np.array([0 if prediction < threshold else 1 for prediction in y_pred])
     return y_pred
 
 
+def make_predictions_logistic_regression(x, w, threshold=0.5):
+    y_pred = sigmoid(x @ w)
+    y_pred = np.array([0 if prediction < threshold else 1 for prediction in y_pred])
+    return y_pred
+
+
 def compute_scores_linear_model(x, w, y, threshold=None, apply_sigmoid=False):
     y_pred = make_predictions_linear_model(x, w, threshold, apply_sigmoid)
+    TP = np.sum(np.logical_and(y_pred == 1, y == 1))
+    FP = np.sum(np.logical_and(y_pred == 1, y == 0))
+    FN = np.sum(np.logical_and(y_pred == 0, y == 1))
+    precision = TP / (TP + FP)
+    recall = TP / (TP + FN)
+    f1 = 2 * precision * recall / (precision + recall)
+    return precision, recall, f1
+
+
+def compute_scores_logistic_regression(x, w, y, threshold=None):
+    y_pred = make_predictions_logistic_regression(x, w, threshold)
     TP = np.sum(np.logical_and(y_pred == 1, y == 1))
     FP = np.sum(np.logical_and(y_pred == 1, y == 0))
     FN = np.sum(np.logical_and(y_pred == 0, y == 1))
@@ -464,10 +479,14 @@ def build_poly(x, degree):
     return feature_matrix
 
 
-def build_poly_expension_with_interaction_features(x, features_names: list, max_degree, interactions=False):
+def build_poly_expansion_with_interaction_features(
+    x, features_names: list, max_degree, interactions=False
+):
     """Build interaction features from x"""
     if interactions:
-        poly = np.zeros((x.shape[0], max_degree * x.shape[1] + (x.shape[1] * (x.shape[1] - 1)) // 2))
+        poly = np.zeros(
+            (x.shape[0], max_degree * x.shape[1] + (x.shape[1] * (x.shape[1] - 1)) // 2)
+        )
     else:
         poly = np.zeros((x.shape[0], max_degree * x.shape[1]))
 
@@ -478,7 +497,7 @@ def build_poly_expension_with_interaction_features(x, features_names: list, max_
             poly[:, index] = x[:, j] ** degree
             new_features_name.append(features_names[j] + "**" + str(degree))
             index += 1
-    
+
     if interactions:
         for j in range(x.shape[1]):
             for k in range(j + 1, x.shape[1]):
@@ -487,3 +506,28 @@ def build_poly_expension_with_interaction_features(x, features_names: list, max_
                 index += 1
 
     return poly, new_features_name
+
+
+def build_k_indices(num_row, k_fold, seed):
+    interval = int(num_row / k_fold)
+    np.random.seed(seed)
+    indices = np.random.permutation(num_row)
+    k_indices = [indices[k * interval : (k + 1) * interval] for k in range(k_fold)]
+    return np.array(k_indices)
+
+
+def cross_validation(y, x, k_indices, k, lambda_, gamma, max_iters, initial_w):
+    val_indices = k_indices[k]
+    tr_indices = k_indices[~(np.arange(k_indices.shape[0]) == k)].flatten()
+
+    y_val = y[val_indices]
+    y_tr = y[tr_indices]
+    x_val_cv = x[val_indices]
+    x_tr_cv = x[tr_indices]
+
+    w, losses, gen_losses = my_reg_logistic_regression(
+        y_tr, x_tr_cv, y_val, x_val_cv, lambda_, initial_w, max_iters, gamma
+    )
+    loss_tr = np.min(losses)
+    loss_val = np.min(gen_losses)
+    return loss_tr, loss_val
