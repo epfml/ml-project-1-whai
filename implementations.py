@@ -523,9 +523,13 @@ def cross_validation(y, x, k_indices, k, lambda_, gamma, max_iters, initial_w):
     x_val_cv = x[val_indices]
     x_tr_cv = x[tr_indices]
 
-    w, losses, gen_losses = my_reg_logistic_regression(
+    w, _, _ = my_reg_logistic_regression(
         y_tr, x_tr_cv, y_val, x_val_cv, lambda_, initial_w, max_iters, gamma
     )
-    loss_tr = losses[-1]
-    loss_val = gen_losses[-1]
-    return loss_tr, loss_val
+
+    thr_l = np.arange(0.2, 0.9, 0.02)
+    f1 = [
+        compute_scores_linear_model(x_val_cv, w, y_val, threshold=t)[2] for t in thr_l
+    ]
+    best_thr = thr_l[np.argmax(f1)]
+    return np.max(f1), best_thr
