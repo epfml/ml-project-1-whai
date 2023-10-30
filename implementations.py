@@ -223,7 +223,11 @@ def calculate_logistic_gradient(y, tx, w):
     return 1 / y.shape[0] * tx.T @ (sigmoid(tx @ w) - y)
 
 
-def logistic_learning_by_gradient_descent(y, tx, w, gamma):
+def calculate_logistic_stochastic_gradient(y, tx, w):
+    return tx @ (sigmoid(tx @ w) - y)
+
+
+def logistic_learning_by_gradient_descent(y, tx, w, gamma, SGD=False):
     """
     Do one step of gradient descent using logistic regression. Return the loss and the updated w.
 
@@ -237,13 +241,20 @@ def logistic_learning_by_gradient_descent(y, tx, w, gamma):
         loss: scalar number
         w: shape=(D,)"""
 
-    gradient = calculate_logistic_gradient(y, tx, w)
+    if SGD:
+        rand_index = np.random.randint(0, y.shape[0])
+        x_n = tx[rand_index]
+        y_n = y[rand_index]
+        gradient = calculate_logistic_stochastic_gradient(y_n, x_n, w)
+    else:
+        gradient = calculate_logistic_gradient(y, tx, w)
+
     w -= gamma * gradient
     loss = calculate_logistic_loss(y, tx, w)
     return loss, w
 
 
-def logistic_regression_gradient_descent(y, tx, initial_w, max_iters, gamma):
+def logistic_regression_gradient_descent(y, tx, initial_w, max_iters, gamma, SGD=False):
     # start the logistic regression
     w = initial_w
     loss = calculate_logistic_loss(y, tx, initial_w)
@@ -252,13 +263,13 @@ def logistic_regression_gradient_descent(y, tx, initial_w, max_iters, gamma):
 
     for n in range(max_iters):
         # get loss and update w.
-        loss, w = logistic_learning_by_gradient_descent(y, tx, w, gamma)
+        loss, w = logistic_learning_by_gradient_descent(y, tx, w, gamma, SGD)
         losses.append(loss)
 
     return w, loss
 
 
-def logistic_regression(y, tx, initial_w, max_iters, gamma):
+def logistic_regression(y, tx, initial_w, max_iters, gamma, SGD=False):
     """
     Compute the standard logistic regression, with the gradient descent.
 
@@ -275,7 +286,7 @@ def logistic_regression(y, tx, initial_w, max_iters, gamma):
         loss: scalar number
     """
 
-    return logistic_regression_gradient_descent(y, tx, initial_w, max_iters, gamma)
+    return logistic_regression_gradient_descent(y, tx, initial_w, max_iters, gamma, SGD)
 
 
 """
@@ -283,7 +294,7 @@ REGULARIZED LOGISTIC REGRESSION
 """
 
 
-def penalized_logistic_regression(y, tx, w, lambda_):
+def penalized_logistic_regression(y, tx, w, lambda_, SGD=False):
     """return the loss and gradient.
 
     Args:
@@ -297,12 +308,18 @@ def penalized_logistic_regression(y, tx, w, lambda_):
         gradient: shape=(D,)"""
 
     loss = calculate_logistic_loss(y, tx, w) + lambda_ * np.squeeze(w.T @ w)
-    gradient = calculate_logistic_gradient(y, tx, w) + 2 * lambda_ * w
+    if SGD:
+        rand_index = np.random.randint(0, y.shape[0])
+        x_n = tx[rand_index]
+        y_n = y[rand_index]
+        gradient = calculate_logistic_stochastic_gradient(y_n, x_n, w) + 2 * lambda_ * w
+    else:
+        gradient = calculate_logistic_gradient(y, tx, w) + 2 * lambda_ * w
 
     return loss, gradient
 
 
-def learning_by_penalized_gradient(y, tx, w, gamma, lambda_):
+def learning_by_penalized_gradient(y, tx, w, gamma, lambda_, SGD=False):
     """
     Do one step of gradient descent, using the penalized logistic regression.
     Return the loss and updated w.
@@ -317,14 +334,19 @@ def learning_by_penalized_gradient(y, tx, w, gamma, lambda_):
     Returns:
         loss: scalar number
         w: shape=(D,)"""
-    loss, penalized_gradient = penalized_logistic_regression(y, tx, w, lambda_)
+    if SGD:
+        loss, penalized_gradient = penalized_logistic_regression(
+            y, tx, w, lambda_, SGD=True
+        )
+    else:
+        loss, penalized_gradient = penalized_logistic_regression(y, tx, w, lambda_)
 
     w -= gamma * penalized_gradient
     new_loss = calculate_logistic_loss(y, tx, w)
     return w, new_loss
 
 
-def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma):
+def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma, SGD=False):
     """
     Compute the regularized logistic regression.
 
@@ -344,7 +366,10 @@ def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma):
     loss = calculate_logistic_loss(y, tx, w)
 
     for n in range(max_iters):
-        w, loss = learning_by_penalized_gradient(y, tx, w, gamma, lambda_)
+        if SGD:
+            w, loss = learning_by_penalized_gradient(y, tx, w, gamma, lambda_, SGD=True)
+        else:
+            w, loss = learning_by_penalized_gradient(y, tx, w, gamma, lambda_)
 
     return w, loss
 
