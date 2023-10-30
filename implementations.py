@@ -444,7 +444,7 @@ def split_data(x, y, ratio, seed=1):
 
 
 def make_predictions_linear_model(x, w, threshold=0.5, apply_sigmoid=False):
-    """Compute predictions for a linear model 
+    """Compute predictions for a linear model
 
     :param x: x matrix of the samples
     :type x: np.array
@@ -466,7 +466,7 @@ def make_predictions_linear_model(x, w, threshold=0.5, apply_sigmoid=False):
 
 
 def make_predictions_logistic_regression(x, w, threshold=0.5):
-    """Compute predictions for a log regression model 
+    """Compute predictions for a log regression model
 
     :param x: x matrix of the sample
     :type x: np.array
@@ -485,7 +485,7 @@ def make_predictions_logistic_regression(x, w, threshold=0.5):
 
 
 def compute_scores_linear_model(x, w, y, threshold=None, apply_sigmoid=False):
-    """compute precision recall and f1-score for a linear model x.dot(w), 
+    """compute precision recall and f1-score for a linear model x.dot(w),
     with a specific threshold on the outcome. You can apply the sigmoid function on the dot product to compute predictions
 
     :param x: x matrix of the samples
@@ -510,7 +510,7 @@ def compute_scores_linear_model(x, w, y, threshold=None, apply_sigmoid=False):
 
 
 def compute_scores_logistic_regression(x, w, y, threshold=None):
-    """compute precision recall and f1-score for a logistic model, 
+    """compute precision recall and f1-score for a logistic model,
     with a specific threshold on the outcome.
 
     :param x: x matrix of the samples
@@ -519,7 +519,7 @@ def compute_scores_logistic_regression(x, w, y, threshold=None):
     :type w: np.array
     :param threshold: threshold above wich we assign the outcome 1, defaults to 0.5
     :type threshold: float, optional
-    
+
     :return: precision, recall, f1-score
     :rtype: tuple of float,size 3
     """
@@ -585,7 +585,7 @@ def build_poly_expansion_with_interaction_features(
 
 
 def build_k_indices(num_row, k_fold, seed):
-    """ Function to build indices to separate indices into k_fols equal intervals"""
+    """Function to build indices to separate indices into k_fols equal intervals"""
     interval = int(num_row / k_fold)
     np.random.seed(seed)
     indices = np.random.permutation(num_row)
@@ -593,7 +593,9 @@ def build_k_indices(num_row, k_fold, seed):
     return np.array(k_indices)
 
 
-def cross_validation_regularized_log_regression(y, x, k_indices, k, lambda_, gamma, max_iters, initial_w):
+def cross_validation_regularized_log_regression(
+    y, x, k_indices, k, lambda_, gamma, max_iters, initial_w
+):
     """Performs a cross validation with logistic regression, return the best f1 score with the best threshold to set
 
     :param y: true labels
