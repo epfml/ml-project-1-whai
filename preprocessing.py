@@ -106,7 +106,7 @@ def clean_data(names_map, x_raw, y_raw=None, is_y=False, is_train_data=True, mea
     days_indices = np.where((array >= 12014)*(array <= 122015))
 
     x[:, names_map["FLSHTMY2"]][none_indices] = np.nan
-    x[:, names_map["FLSHTMY2"]][days_indices] = x[:, names_map["FLSHTMY2"]][days_indices]//10000 + 12*x[:, names_map["FLSHTMY2"]][days_indices]%10000
+    x[:, names_map["FLSHTMY2"]][days_indices] = x[:, names_map["FLSHTMY2"]][days_indices]//10000 + x[:, names_map["FLSHTMY2"]][days_indices]%10000 * 12
 
     #fix the frequency scales of the following columns
     frequency_scaler(x, "FRUITJU1", names_map)
