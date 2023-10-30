@@ -1,1 +1,7 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-24ddc0f5d75046c5622901739e7c5dd533143b0c8e959d652212380cedb1ea36.svg)](https://classroom.github.com/a/U9FTc9i_)
+
+
+This repository contains the code for the Machine Learning course of autumn 2023 at EPFL.
+
+It focuses on applying machine learning techniques to predict whether a given individual who has answered a bunch of questions is likely to have a particular cardiovascular disease.
+
+Authors: Anthony Kalaydjian, Anton Balykov, Alexis Semiz
