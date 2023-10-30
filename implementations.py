@@ -528,6 +528,6 @@ def cross_validation(y, x, k_indices, k, lambda_, gamma, max_iters, initial_w):
     w, losses, gen_losses = my_reg_logistic_regression(
         y_tr, x_tr_cv, y_val, x_val_cv, lambda_, initial_w, max_iters, gamma
     )
-    loss_tr = np.min(losses)
-    loss_val = np.min(gen_losses)
+    loss_tr = losses[-1]
+    loss_val = gen_losses[-1]
     return loss_tr, loss_val
