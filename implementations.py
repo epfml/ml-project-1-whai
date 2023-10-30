@@ -349,7 +349,7 @@ def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma):
     return w, loss
 
 
-def my_reg_logistic_regression(
+def my_reg_logistic_regression_for_cv(
     y_tr, x_tr, y_val, x_val, lambda_, initial_w, max_iters, gamma
 ):
     """
@@ -419,6 +419,19 @@ def split_data(x, y, ratio, seed=1):
 
 
 def make_predictions_linear_model(x, w, threshold=0.5, apply_sigmoid=False):
+    """Compute predictions for a linear model 
+
+    :param x: x matrix of the samples
+    :type x: np.array
+    :param w: weights
+    :type w: np.array
+    :param threshold: threshold above wich we assign the outcome 1, defaults to 0.5
+    :type threshold: float, optional
+    :param apply_sigmoid: if we apply the simoid function to x.dot(w), defaults to False
+    :type apply_sigmoid: bool, optional
+    :return: the predictions
+    :rtype: np.array
+    """
     w2 = w.ravel()
     y_pred = x.dot(w2.T)
     if apply_sigmoid:
@@ -428,12 +441,39 @@ def make_predictions_linear_model(x, w, threshold=0.5, apply_sigmoid=False):
 
 
 def make_predictions_logistic_regression(x, w, threshold=0.5):
+    """Compute predictions for a log regression model 
+
+    :param x: x matrix of the sample
+    :type x: np.array
+    :param w: weights
+    :type w: np.array
+    :param threshold: threshold above wich we assign the outcome 1, defaults to 0.5
+    :type threshold: float, optional
+    :param apply_sigmoid: if we apply the simoid function to x.dot(w), defaults to False
+    :type apply_sigmoid: bool, optional
+    :return: the predictions
+    :rtype: np.array
+    """
     y_pred = sigmoid(x @ w)
     y_pred = np.array([0 if prediction < threshold else 1 for prediction in y_pred])
     return y_pred
 
 
 def compute_scores_linear_model(x, w, y, threshold=None, apply_sigmoid=False):
+    """compute precision recall and f1-score for a linear model x.dot(w), 
+    with a specific threshold on the outcome. You can apply the sigmoid function on the dot product to compute predictions
+
+    :param x: x matrix of the samples
+    :type x: np.array
+    :param w: weights
+    :type w: np.array
+    :param threshold: threshold above wich we assign the outcome 1, defaults to 0.5
+    :type threshold: float, optional
+    :param apply_sigmoid: if we apply the simoid function to x.dot(w), defaults to False
+    :type apply_sigmoid: bool, optional
+    :return: precision, recall, f1-score
+    :rtype: tuple of float,size 3
+    """
     y_pred = make_predictions_linear_model(x, w, threshold, apply_sigmoid)
     TP = np.sum(np.logical_and(y_pred == 1, y == 1))
     FP = np.sum(np.logical_and(y_pred == 1, y == 0))
@@ -445,6 +485,19 @@ def compute_scores_linear_model(x, w, y, threshold=None, apply_sigmoid=False):
 
 
 def compute_scores_logistic_regression(x, w, y, threshold=None):
+    """compute precision recall and f1-score for a logistic model, 
+    with a specific threshold on the outcome.
+
+    :param x: x matrix of the samples
+    :type x: np.array
+    :param w: weights
+    :type w: np.array
+    :param threshold: threshold above wich we assign the outcome 1, defaults to 0.5
+    :type threshold: float, optional
+    
+    :return: precision, recall, f1-score
+    :rtype: tuple of float,size 3
+    """
     y_pred = make_predictions_logistic_regression(x, w, threshold)
     TP = np.sum(np.logical_and(y_pred == 1, y == 1))
     FP = np.sum(np.logical_and(y_pred == 1, y == 0))
@@ -507,6 +560,7 @@ def build_poly_expansion_with_interaction_features(
 
 
 def build_k_indices(num_row, k_fold, seed):
+    """ Function to build indices to separate indices into k_fols equal intervals"""
     interval = int(num_row / k_fold)
     np.random.seed(seed)
     indices = np.random.permutation(num_row)
@@ -514,7 +568,28 @@ def build_k_indices(num_row, k_fold, seed):
     return np.array(k_indices)
 
 
-def cross_validation(y, x, k_indices, k, lambda_, gamma, max_iters, initial_w):
+def cross_validation_regularized_log_regression(y, x, k_indices, k, lambda_, gamma, max_iters, initial_w):
+    """Performs a cross validation with logistic regression, return the best f1 score with the best threshold to set
+
+    :param y: true labels
+    :type y: np.array
+    :param x: sample matrix
+    :type x: np.array
+    :param k_indices: indices built by build_k_indices
+    :type k_indices: int
+    :param k: number of folds
+    :type k: int
+    :param lambda_: parameter of penalized log regression
+    :type lambda_: float
+    :param gamma: learning rate
+    :type gamma: float
+    :param max_iters: number of iterations for the regression
+    :type max_iters: int
+    :param initial_w: initial weights
+    :type initial_w: np.array
+    :return: (f1score, best threshold)
+    :rtype: tuple of floats
+    """
     val_indices = k_indices[k]
     tr_indices = k_indices[~(np.arange(k_indices.shape[0]) == k)].flatten()
 
@@ -523,7 +598,7 @@ def cross_validation(y, x, k_indices, k, lambda_, gamma, max_iters, initial_w):
     x_val_cv = x[val_indices]
     x_tr_cv = x[tr_indices]
 
-    w, _, _ = my_reg_logistic_regression(
+    w, _, _ = my_reg_logistic_regression_for_cv(
         y_tr, x_tr_cv, y_val, x_val_cv, lambda_, initial_w, max_iters, gamma
     )
 
