@@ -37,7 +37,7 @@ def hours_to_minutes(df, col, names_map):
     hour_indices    = np.where(( (df[:, names_map[col]]>=1)*(df[:, names_map[col]]<=759) + (df[:, names_map[col]]>=800)*(df[:, names_map[col]]<=959))==True)
     none_indices    = np.where(((df[:, names_map[col]]==777) + (df[:, names_map[col]]==999))==True)
     
-    df[:, names_map[col]][hour_indices] = 60*df[:, names_map[col]][hour_indices]//100 + df[:, names_map[col]][hour_indices]%100                                                 
+    df[:, names_map[col]][hour_indices] = df[:, names_map[col]][hour_indices]//100 + df[:, names_map[col]][hour_indices]%100*60                                                 
     df[:, names_map[col]][none_indices] = np.nan
 
 #function to NaN in a column of a pandas dataframe
@@ -106,7 +106,7 @@ def clean_data(names_map, x_raw, y_raw=None, is_y=False, is_train_data=True, mea
     days_indices = np.where((array >= 12014)*(array <= 122015))
 
     x[:, names_map["FLSHTMY2"]][none_indices] = np.nan
-    x[:, names_map["FLSHTMY2"]][days_indices] = x[:, names_map["FLSHTMY2"]][days_indices]//10000 + 12*x[:, names_map["FLSHTMY2"]][days_indices]%10000
+    x[:, names_map["FLSHTMY2"]][days_indices] = x[:, names_map["FLSHTMY2"]][days_indices]//10000 + x[:, names_map["FLSHTMY2"]][days_indices]%10000*12
 
     #fix the frequency scales of the following columns
     frequency_scaler(x, "FRUITJU1", names_map)

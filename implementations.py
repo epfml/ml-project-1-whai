@@ -255,8 +255,6 @@ def logistic_regression_gradient_descent(y, tx, initial_w, max_iters, gamma):
         loss, w = logistic_learning_by_gradient_descent(y, tx, w, gamma)
         losses.append(loss)
 
-    plt.plot(losses)
-
     return w, loss
 
 
